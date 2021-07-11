@@ -1,0 +1,55 @@
+#include "ListFunctions.h"
+
+void List_Init() {
+    LinkedList_head = NULL;
+
+    for (i = NUMBER_OF_STUDENTS - 1; i >= 0; i--)
+    {
+        Student* student = (Student*)malloc(sizeof(Student));
+        student->id = id_array[i];
+        student->account = account_array[i];
+        student->name = name_array[i];
+        student->mark = mark_array[i];
+
+        LinkedList_PushToHead(student);
+    }
+}
+
+void List_Search() {
+    char input_name[CAPACITY_OF_FIELD_NAME];
+                printf("Type in the name to find: ");
+                scanf("%[^\n]%*c", input_name);
+                current_node = LinkedList_head;
+                bool flag_exist = FALSE;
+
+                /*search through the list and print all matching result*/
+                printf("Search results:\n");
+                while (current_node != NULL)
+                {
+                    char *current_node__name = ((Student*)(current_node->item))->name;
+
+                    if (strcmp(current_node__name, input_name) == 0)
+                    {
+                        if (flag_exist == FALSE)
+                        {
+                            PrintTableHeader();
+                            flag_exist = TRUE;
+                        }
+
+                        PrintStudent(current_node->item);
+                        putchar('\n');
+                    }
+
+                    current_node = current_node->next;
+                }
+
+                if (flag_exist)
+                {
+                    PrintTableFooter();
+                }
+                else
+                {
+                    printf(" No matching.\n");
+                }
+                printf("Searching completed.");
+}

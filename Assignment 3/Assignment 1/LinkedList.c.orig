@@ -1,0 +1,9 @@
+
+struct t_node {
+    void *item;
+    struct t_node *next;
+} head;
+
+  typedef struct t_node node;
+
+
