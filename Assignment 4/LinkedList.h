@@ -3,7 +3,6 @@
 
 #include <stdlib.h>
 
-int LinkedList_size;
 typedef enum {FALSE, TRUE} bool;
 
 struct t_node
@@ -14,10 +13,16 @@ struct t_node
 
 typedef struct t_node node;
 
-node* LinkedList_head;/*head*/
+node* g_LinkedList_head;/*head*/
+
+int LinkedList_GetSize();
 
 int LinkedList_PushToHead(void* item);/*Insert a node after head*/
 
 int LinkedList_InsertAt(void* item, int position);/*Insert a node at specified position*/
+
+int LinkedList_DeleteAt(int position);
+
+node* LinkedList_NodeAt(int position);
 
 #endif/*_LINKED_LIST_H*/

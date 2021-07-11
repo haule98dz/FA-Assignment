@@ -4,8 +4,8 @@
 CPP      = g++.exe
 CC       = gcc.exe
 WINDRES  = windres.exe
-OBJ      = main.o LinkedList.o
-LINKOBJ  = main.o LinkedList.o
+OBJ      = main.o LinkedList.o MainOperators.o ClassInfo.o
+LINKOBJ  = main.o LinkedList.o MainOperators.o ClassInfo.o
 LIBS     = -L"E:/Program Files/Dev-Cpp/MinGW32/lib" -L"E:/Program Files/Dev-Cpp/MinGW32/mingw32/lib" -static-libstdc++ -static-libgcc -g3
 INCS     = -I"E:/Program Files/Dev-Cpp/MinGW32/include" -I"E:/Program Files/Dev-Cpp/MinGW32/mingw32/include" -I"E:/Program Files/Dev-Cpp/MinGW32/lib/gcc/mingw32/4.8.1/include"
 CXXINCS  = -I"E:/Program Files/Dev-Cpp/MinGW32/include" -I"E:/Program Files/Dev-Cpp/MinGW32/mingw32/include" -I"E:/Program Files/Dev-Cpp/MinGW32/lib/gcc/mingw32/4.8.1/include" -I"E:/Program Files/Dev-Cpp/MinGW32/lib/gcc/mingw32/4.8.1/include/c++"
@@ -29,3 +29,9 @@ main.o: main.c
 
 LinkedList.o: LinkedList.c
 	$(CC) -c LinkedList.c -o LinkedList.o $(CFLAGS)
+
+MainOperators.o: MainOperators.c
+	$(CC) -c MainOperators.c -o MainOperators.o $(CFLAGS)
+
+ClassInfo.o: ClassInfo.c
+	$(CC) -c ClassInfo.c -o ClassInfo.o $(CFLAGS)

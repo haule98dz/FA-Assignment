@@ -160,7 +160,7 @@ void Main_Insert()
     if (FindByID(student->id) > 0)
     {
         printf("    Student's ID must be unique. ID %d is already appear.\n", student->id);
-        printf("    Failed to insert.");
+        printf("    Failed to insert.")
     }
     else
     {
@@ -170,7 +170,7 @@ void Main_Insert()
         if (FindByAccount(student->account) > 0)
         {
             printf("    Student's Account must be unique. Acount %s is already appear.", student->account);
-            printf("    Failed to insert.");
+                    printf("    Failed to insert.")
         }
         else
         {
@@ -378,13 +378,7 @@ void Main_Sort()
             }
         }
 
-        printf("Linked list has been sorted");
-        if (input == 'n') {
-            printf("by name.\n");
-        } else {
-            printf("by average mark.\n");
-        }
-        pause();
+        printf("Linked list has been sorted.\n");
     }
 }
 
