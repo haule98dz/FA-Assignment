@@ -1,22 +1,35 @@
+/*******************************************************************************
+* Includes
+******************************************************************************/
 #include "MainOperators.h"
-#include "LinkedList.h"
 
+/*******************************************************************************
+* Prototypes
+******************************************************************************/
+
+/* Wait for user's respond */
 inline void pause()
 {
     printf("\nPress any key to continue...");
     getch();
 }
 
-void PrintTutorial();
-void PrintTableHeader();
-void PrintTableFooter();
+/* These two functions below is used to draw table in console screen */
+static void PrintTableHeader();
+static void PrintTableFooter();
 
-void SortByName();
-void SortByMark();
-void swap_item(node* node1, node* node2);
+/* Swap the items of two linked list nodes */
+static void swap_item(node* node1, node* node2);
 
-int FindByID();
+/*
+* @brief Search for student by account
+* @return Position of student in list (=-1 if not found)
+*/
+static int FindByAccount(char student_account[CAPACITY_OF_FIELD_ACCOUNT]);
 
+/*******************************************************************************
+* Code
+******************************************************************************/
 void List_Init()
 {
     int i;
@@ -24,7 +37,6 @@ void List_Init()
     for (i = NUMBER_OF_STUDENTS - 1; i >= 0; i--)
     {
         Student* student = (Student*)malloc(sizeof(Student));
-        student->id = data_id[i];
         strcpy(student->account, data_account[i]);
         strcpy(student->name, data_name[i]);
         student->mark = data_mark[i];
@@ -44,21 +56,21 @@ void PrintTutorial()
     printf("---------------------------------------\n");
 }
 
-void PrintStudent(Student* student, int count)
+static void PrintStudent(Student* student, int count)
 {
-    printf("    |%-5d|\033[0;32m %-11d\033[0m|\033[0;32m %-10s\033[0m|\033[0;32m %-20s\033[0m|\033[0;32m      %-10d\033[0m|\n", count, student->id, student->account, student->name, student->mark);
+    printf("    | %-4d|\033[0;32m %-10s\033[0m|\033[0;32m %-20s\033[0m|\033[0;32m      %-10d\033[0m|\n", count, student->account, student->name, student->mark);
 }
 
-void PrintTableHeader()
+static void PrintTableHeader()
 {
-    printf("    _______________________________________________________________________\n");
-    printf("    |Count| Student ID |  Account  |        Name         |  Average Mark  |\n");
-    printf("    |-----|------------|-----------|---------------------|----------------|\n");
+    printf("    __________________________________________________________\n");
+    printf("    |Count|  Account  |        Name         |  Average Mark  |\n");
+    printf("    |-----|-----------|---------------------|----------------|\n");
 }
 
-void PrintTableFooter()
+static void PrintTableFooter()
 {
-    printf("    |_____|____________|___________|_____________________|________________|\n\n");
+    printf("    |_____|___________|_____________________|________________|\n\n");
 }
 
 void Main_SearchAndPrint()
@@ -70,9 +82,9 @@ void Main_SearchAndPrint()
     node* current_node = g_LinkedList_head;
     bool flag_exist = FALSE;
 
-    /*search through the list and print all matching result*/
     printf("Search results:\n");
 
+    /* Search through the list and print all matching result */
     int count = 1;
 
     while (current_node != NULL)
@@ -114,6 +126,7 @@ void Main_PrintAll()
     PrintTableHeader();
     int count = 1;
 
+    /* Search through the list and print all information */
     while (current_node != NULL)
     {
         PrintStudent(current_node->item, count);
@@ -131,6 +144,7 @@ void Main_Insert()
     int insert_position;
     int list_size = LinkedList_GetSize();
 
+    /* Get position-to-insert, check for validity */
     do
     {
         if (flag_ValidInput == FALSE)
@@ -153,65 +167,58 @@ void Main_Insert()
     }
     while (flag_ValidInput == FALSE);
 
+    /* Get student's account */
     Student* student = (Student*)malloc(sizeof(Student));
-    printf("    Student's Identification number: ");
-    scanf("%d%*c", &(student->id));
+    printf("    Student's account: ");
+    scanf("%[^\n]%*c", student->account);
 
-    if (FindByID(student->id) > 0)
+    /* Check whether the account already exists */
+    if (FindByAccount(student->account) > 0)
     {
-        printf("    Student's ID must be unique. ID %d is already appear.\n", student->id);
-        printf("    Failed to insert.")
+        printf("    Student's Account must be unique. Acount %s is already appear.", student->account);
+        printf("    Failed to insert.");
     }
     else
     {
-        printf("    Student's account: ");
-        scanf("%[^\n]%*c", student->account);
+        /* Get student's name */
+        printf("    Student's name: ");
+        scanf("%[^\n]%*c", student->name);
 
-        if (FindByAccount(student->account) > 0)
+        int input_mark;
+        flag_ValidInput = TRUE;
+
+        /* Get student's average mark  */
+        do
         {
-            printf("    Student's Account must be unique. Acount %s is already appear.", student->account);
-                    printf("    Failed to insert.")
+            if (flag_ValidInput == FALSE)
+            {
+                printf("    Error: Invalid input.\n");
+            }
+
+            printf("    Student's average mark (integer 0 to 100): ");
+            flag_ValidInput = FALSE;
+
+            if (scanf("%d%*c", &input_mark) == 1)
+            {
+                if (input_mark >= 0 && input_mark <= 100)
+                {
+                    flag_ValidInput = TRUE;
+                }
+
+            }
+        }
+        while (flag_ValidInput == FALSE);
+
+        student->mark = input_mark;
+
+        /* Insert student's information to linked list */
+        if (LinkedList_InsertAt(student, insert_position))
+        {
+            printf("Insert successfully to position %d", insert_position);
         }
         else
         {
-
-            printf("    Student's name: ");
-            scanf("%[^\n]%*c", student->name);
-
-            int input_mark;
-            flag_ValidInput = TRUE;
-
-            do
-            {
-                if (flag_ValidInput == FALSE)
-                {
-                    printf("    Error: Invalid input.\n");
-                }
-
-                printf("    Student's average mark (integer 0 to 100): ");
-                flag_ValidInput = FALSE;
-
-                if (scanf("%d%*c", &input_mark) == 1)
-                {
-                    if (input_mark >= 0 && input_mark <= 100)
-                    {
-                        flag_ValidInput = TRUE;
-                    }
-
-                }
-            }
-            while (flag_ValidInput == FALSE);
-
-            student->mark = input_mark;
-
-            if (LinkedList_InsertAt(student, insert_position))
-            {
-                printf("Insert successfully to position %d", insert_position);
-            }
-            else
-            {
-                printf("Failed to insert.");
-            }
+            printf("Failed to insert.");
         }
     }
 
@@ -232,6 +239,7 @@ void Main_Delete()
         bool flag_ValidInput = TRUE;
         int delete_position;
 
+        /* Get position to delete, and check for validity */
         do
         {
             if (flag_ValidInput == FALSE)
@@ -254,6 +262,7 @@ void Main_Delete()
         }
         while (flag_ValidInput == FALSE);
 
+        /* Print out the information of the student who is being remove */
         node* being_deleted = LinkedList_NodeAt(delete_position);
         printf("This student will be remove:\n");
         PrintTableHeader();
@@ -262,6 +271,7 @@ void Main_Delete()
 
         char input;
 
+        /* Ask again */
         do
         {
             printf("Are you sure to continue? (y/n): ");
@@ -276,7 +286,7 @@ void Main_Delete()
 
         if (input == 'y')
         {
-
+            /* Delete node */
             if (LinkedList_DeleteAt(delete_position))
             {
                 printf("Delete successfully the element at position %d.", delete_position);
@@ -309,23 +319,23 @@ void Main_Sort()
     }
     else
     {
-
         printf("    Press 'n' to sort by name.\n    Press 'm' to sort by average mark.\n    ");
         char input = 0;
 
+        /* Get input and check for validity */
         do
         {
             scanf(" %c%*c", &input);
 
             if (input != 'n' && input != 'm')
             {
-
                 input = 0;
                 printf("    Invalid input, please type again.");
             }
         }
         while (input == 0);
 
+        /* Bubble sorting */
         int i;
         int j;
         i = LinkedList_GetSize() - 1;
@@ -378,11 +388,21 @@ void Main_Sort()
             }
         }
 
-        printf("Linked list has been sorted.\n");
+        printf("Linked list has been sorted");
+
+        if (input == 'n')
+        {
+            printf("by name.\n");
+        }
+        else
+        {
+            printf("by average mark.\n");
+        }
     }
+    pause();
 }
 
-void swap_item(node* node1, node* node2)
+static void swap_item(node* node1, node* node2)
 {
     void* temp;
     temp = node1->item;
@@ -390,31 +410,7 @@ void swap_item(node* node1, node* node2)
     node2->item = temp;
 }
 
-int FindByID(int student_id)
-{
-    int retVal = -1;
-    node* current_node = g_LinkedList_head;
-    bool flag_stop = FALSE;
-    int count = 1;
-
-    while (current_node != NULL && flag_stop == FALSE)
-    {
-        if (student_id == ((Student*)(current_node->item))->id)
-        {
-            retVal = count;
-            flag_stop = TRUE;
-        }
-        else
-        {
-            current_node = current_node->next;
-            count++;
-        }
-    }
-
-    return retVal;
-}
-
-int FindByAccount(char student_account[CAPACITY_OF_FIELD_ACCOUNT])
+static int FindByAccount(char student_account[CAPACITY_OF_FIELD_ACCOUNT])
 {
     int retVal = -1;
     node* current_node = g_LinkedList_head;

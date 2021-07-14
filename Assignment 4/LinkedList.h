@@ -1,8 +1,14 @@
-#ifndef _LINKED_LIST_H
-#define _LINKED_LIST_H
+#ifndef _LINKED_LIST_
+#define _LINKED_LIST_
 
+/*******************************************************************************
+* Includes
+******************************************************************************/
 #include <stdlib.h>
 
+/*******************************************************************************
+* Definitions
+******************************************************************************/
 typedef enum {FALSE, TRUE} bool;
 
 struct t_node
@@ -13,16 +19,18 @@ struct t_node
 
 typedef struct t_node node;
 
-node* g_LinkedList_head;/*head*/
+/*******************************************************************************
+* API
+******************************************************************************/
+int LinkedList_GetSize(void);
 
-int LinkedList_GetSize();
+int LinkedList_PushToHead(void* item);/*Insert a node after head.*/
 
-int LinkedList_PushToHead(void* item);/*Insert a node after head*/
+int LinkedList_InsertAt(void* item, int position);/*Insert a node at specified position.*/
 
-int LinkedList_InsertAt(void* item, int position);/*Insert a node at specified position*/
+int LinkedList_DeleteAt(int position);/*Delete a node at specified position.*/
 
-int LinkedList_DeleteAt(int position);
+node* LinkedList_NodeAt(int position);/*Get address of the node at specified position.*/
 
-node* LinkedList_NodeAt(int position);
+#endif /*_LINKED_LIST_*/
 
-#endif/*_LINKED_LIST_H*/

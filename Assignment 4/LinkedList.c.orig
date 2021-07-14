@@ -1,47 +1,38 @@
-/*******************************************************************************
-* Includes
-******************************************************************************/
 #include "LinkedList.h"
 
 /*******************************************************************************
 * Prototypes
 ******************************************************************************/
-/* Insert a node after a specified node */
-static int LinkedList_InsertAfter(node* node_before, void* item);
+static int LinkedList_InsertAfter(node* node_before, void* item);/*Insert a node after a specified node*/
 
 /*******************************************************************************
 * Variables
 ******************************************************************************/
-node* g_LinkedList_head;
+node* g_LinkedList_head; /*Linked list head*/
 
 /*******************************************************************************
 * Codes
 ******************************************************************************/
-int LinkedList_GetSize(void)
-{
+int LinkedList_GetSize() {
     int retVal = 0;
     node* current_node = g_LinkedList_head;
-
-    while (current_node != NULL)
-    {
+    while (current_node != NULL) {
         current_node = current_node->next;
         retVal ++;
     }
-
     return retVal;
 }
 
 int LinkedList_PushToHead(void* item)
 {
-    node* new = (node*)malloc(sizeof(node)); /* Allocate memory for the new node */
+    node* new = (node*)malloc(sizeof(node)); /*Allocate memory for the new node*/
     new->item = item;
-    new->next = g_LinkedList_head;           /* Set the pointer-next of the new node to point at the node which the head is pointing at */
-    g_LinkedList_head = new;                 /* set the head to point at the new node */
+    new->next = g_LinkedList_head;           /*Set the pointer-next of the new node to point at the node which the head is pointing at>*/
+    g_LinkedList_head = new;                 /*set the head to point at the new node */
     return TRUE;
 }
 
-static int LinkedList_InsertAfter(node* node_before, void* item)
-{
+static int LinkedList_InsertAfter(node* node_before, void* item) {
     node* new_node = (node*)malloc(sizeof(node)); /*Allocate memory for the new node*/
     new_node->item = item;
 
@@ -75,7 +66,7 @@ int LinkedList_InsertAt(void* item, int position)
             else
             {
                 count++;
-                current_node = current_node->next; /* Go to the next node */
+                current_node = current_node->next;/*Go to the next node*/
             }
         }
     }
@@ -83,62 +74,46 @@ int LinkedList_InsertAt(void* item, int position)
     return flag_success;
 }
 
-int LinkedList_DeleteAt(int delete_position)
-{
+int LinkedList_DeleteAt(int delete_position) {
     bool flag_success = FALSE;
     node* current_node;
     node* previous_node;
 
     current_node = g_LinkedList_head;
 
-    if (delete_position == 1)
-    {
+    if (delete_position == 1) {
         g_LinkedList_head = current_node->next;
         free(current_node);
         flag_success = TRUE;
-    }
-    else
-    {
+    } else {
         int count = 2;
-
-        while (current_node->next != NULL && flag_success == FALSE)
-        {
+        while (current_node->next != NULL && flag_success == FALSE) {
             previous_node = current_node;
-            current_node = previous_node->next;
+        current_node = previous_node->next;
 
-            if (count == delete_position)
-            {
+            if (count == delete_position) {
                 previous_node->next = current_node->next;
                 free(current_node);
 
                 flag_success = TRUE;
-            }
-            else
-            {
+            } else {
                 count++;
             }
         }
     }
-
     return flag_success;
 }
 
-node* LinkedList_NodeAt(int position)
-{
+node* LinkedList_NodeAt(int position) {
     int count = 1;
     node* current_node = g_LinkedList_head;
 
     bool flag_stop = FALSE;
-
-    while (current_node != NULL && flag_stop == FALSE)
-    {
-        if (count != position)
-        {
+    while (current_node != NULL && flag_stop == FALSE) {
+        if (count != position) {
             count++;
             current_node = current_node->next;
-        }
-        else
-        {
+        } else {
             flag_stop = TRUE;
         }
     }

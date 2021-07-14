@@ -1,0 +1,19 @@
+#include <stdint.h>
+#include <stdlib.h>
+typedef enum {
+    FALSE,
+    TRUE
+} bool;
+
+typedef struct node {
+    uint8_t* address_of_data;
+    struct node* next;
+} Node;
+
+extern Node* LinkedList_head;
+
+void LinkedList_InsertNodeAfter(Node* previous_node, Node* new_node);
+
+void LinkedList_DeleteNodeAfter(Node* previous_node, Node* node_to_delete);
+
+int LinkedList_Search(uint8_t searching_data);

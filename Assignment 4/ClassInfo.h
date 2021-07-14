@@ -1,16 +1,12 @@
-#ifndef _CLASS_INFO_H
-#define _CLASS_INFO_H
+#ifndef _CLASS_INFO_
+#define _CLASS_INFO_
 
+/*******************************************************************************
+* Definitions
+******************************************************************************/
 #define NUMBER_OF_STUDENTS 20
 #define CAPACITY_OF_FIELD_NAME 30
 #define CAPACITY_OF_FIELD_ACCOUNT 15
 
-char data_account[NUMBER_OF_STUDENTS][CAPACITY_OF_FIELD_ACCOUNT];
+#endif /*_CLASS_INFO_*/
 
-char data_name[NUMBER_OF_STUDENTS][CAPACITY_OF_FIELD_NAME];
-
-int data_mark[NUMBER_OF_STUDENTS];
-
-int data_id[NUMBER_OF_STUDENTS];
-
-#endif/*_CLASS_INFO_H*/

@@ -1,6 +1,9 @@
-#ifndef _MAIN_OPERATORS_H
-#define _MAIN_OPERATORS_H
+#ifndef _MAIN_OPERATORS_
+#define _MAIN_OPERATORS_
 
+/*******************************************************************************
+* Includes
+******************************************************************************/
 #include <stdio.h>
 #include <stdint.h>
 #include <conio.h>
@@ -8,22 +11,32 @@
 #include "LinkedList.h"
 #include "ClassInfo.h"
 
+/*******************************************************************************
+* Definition
+******************************************************************************/
 typedef struct
 {
     char name[CAPACITY_OF_FIELD_NAME];
     char account[CAPACITY_OF_FIELD_ACCOUNT];
     int mark;
-    int id;
 } Student;
 
-void List_Init();
+/*******************************************************************************
+* API
+******************************************************************************/
+void List_Init(void); /*Initiate data in linked list*/
 
-void Main_Insert();
-void Main_Delete();
-void Main_Sort();
+void Main_Insert(void); /*Users type in position to insert and data to insert. Insert data into linked list.*/
 
-void Main_SearchAndPrint();
-void Main_PrintAll();
-void PrintStudent(Student* student, int count);
+void Main_Delete(void); /*Users type in position to delete. Delete data from linked list.*/
 
-#endif/*_MAIN_OPERATORS_H*/
+void Main_Sort(void); /*Sort the list by name or by average mark.*/
+
+void Main_SearchAndPrint(void); /*Users type in student's name. Search in linked list and print the information of all matching case.*/
+
+void Main_PrintAll(void); /*Print informations of all students.*/
+
+void PrintTutorial(void);
+
+#endif /*_MAIN_OPERATORS_*/
+
