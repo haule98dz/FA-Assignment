@@ -2,7 +2,7 @@
 * Includes
 ******************************************************************************/
 
-#include "read_file.h"
+#include "menu.h"
 
 /*******************************************************************************
 * Codes
@@ -10,9 +10,8 @@
 
 int main(void)
 {
-
     /* Call to read-files program */
-    read_file_exec();
+    menu();
 
     return 0;
 }

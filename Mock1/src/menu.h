@@ -1,8 +1,5 @@
 /**
- * @file read_file.h
- * @author HauLD3
- * @brief A program to browse FAT12 disk.
- *
+ * @brief A program to browse FAT file system.
  */
 
 #ifndef _READ_FILE_
@@ -13,8 +10,8 @@
 ******************************************************************************/
 
 /**
- * @brief Call to read-file-program
+ * @brief Call to app
  */
-void read_file_exec(void);
+void menu(void);
 
 #endif /* _READ_FILE_ */
