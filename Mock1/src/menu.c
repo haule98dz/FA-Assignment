@@ -22,25 +22,23 @@
 
 typedef enum
 {
-    menu_context_exit = 0,
+    menu_exit = 0,
     menu_context_directory = 1,
     menu_context_file = 2
 } menu_context_t;
 
 typedef enum
 {
-    menu_error_code_get_file_name_failed = 5,
-    menu_error_code_invalid_option = 6
+    menu_error_code_success = 0,
+    menu_error_code_get_file_name_failed = 10,
+    menu_error_code_invalid_option = 11
 } menu_error_code_t;
 
 /*******************************************************************************
 * Variable
 ******************************************************************************/
 
-static menu_context_t s_context = menu_context_directory;
-static fatfs_entry_struct_t *s_list_head = NULL;
-static uint8_t *s_file_buffer = NULL;
-static uint32_t s_file_size;
+static menu_context_t s_menu_context = menu_context_directory;
 
 /*******************************************************************************
 * Prototypes
@@ -75,11 +73,16 @@ static void menu_print_error(fatfs_error_code_t error_code);
 static menu_error_code_t menu_show_directory()
 {
     menu_error_code_t retVal;
-    fatfs_entry_struct_t *entry = s_list_head;
-    uint16_t index = 1;
+    static fatfs_entry_struct_t *sp_list_head = NULL;
+    fatfs_entry_struct_t *entry = sp_list_head;
+    uint16_t index;
     uint32_t user_option;
 
+    /* Read directory list */
+    retVal = fatfs_read_dir((*selected_entry)->first_cluster, sp_list_head);
+
     /* Print directory list */
+    system("cls");
     printf("Option   Name     Type     File size   Modified   \n");
     for (index = 1; NULL != entry; index++)
     {
@@ -102,46 +105,83 @@ static menu_error_code_t menu_show_directory()
     }
 
     /* Get user's option */
-    retVal = menu_error_code_invalid_option;
     printf("\nEnter an option (enter 0 to exit): ");
+    retVal = menu_error_code_invalid_option;
     if (0 != scanf("%u", &user_option))
     {
         if (0 < user_option)
         {
-            for (index = 1, entry = s_list_head; index != user_option && NULL != entry; index++)
+            for (index = 1, entry = sp_list_head; index != user_option && NULL != entry; index++)
             {
                 entry = entry->next;
             }
             if (NULL != entry)
             {
+                retVal = menu_error_code_success;
+                *selected_entry = entry;
                 if (entry->is_subdir)
                 {
-                    retVal = fatfs_read_dir(entry->first_cluster, &s_list_head);
+                    s_menu_context = menu_context_directory;
                 }
                 else
                 {
-                    /* Read file */
-                    s_file_buffer = (uint8_t *)malloc(entry->rounded_size);
-                    if (NULL != s_file_buffer)
-                    {
-                        retVal = fatfs_read_file(entry->first_cluster, &s_file_buffer, entry->rounded_size);
-                    }
+                    s_menu_context = menu_context_file;
                 }
             }
+        }
+        else
+        {
+            retVal = menu_error_code_success;
+            s_menu_context = menu_exit;
         }
     }
 
     return retVal;
 }
 
-static menu_context_t menu_show_file()
+static menu_error_code_t menu_show_file(fatfs_entry_struct_t *selected_entry)
 {
+    menu_error_code_t retVal;
     uint32_t index;
+    static uint8_t *sp_file_buffer = NULL;
 
-    for (index = 0; index < size; index++)
+
+    /* Read file */
+    retVal = fatfs_read_file(selected_entry->first_cluster, &sp_file_buffer, selected_entry->rounded_size);
+
+    if (error_code_success == retVal)
     {
-        printf("%x", buff[index]);
+        /* Print file */
+        system("cls");
+        for (index = 0; index < selected_entry->rounded_size; index++)
+        {
+            printf("%x", sp_file_buffer[index]);
+        }
+
+        /* Get user's option */
+        printf("\nEnter 1 to return to subdirectory, enter 0 to exit: ");
+        if (0 != scanf("%u", &user_option))
+        {
+            switch (user_option)
+            {
+                case 0:
+                    s_menu_context = menu_exit;
+                    break;
+                case 1:
+                    s_menu_context = menu_context_directory;
+                    break;
+                default:
+                    retVal = menu_error_code_invalid_option;
+                    break;
+            }
+        }
+        else
+        {
+            retVal = menu_error_code_invalid_option;
+        }
     }
+
+    return retVal;
 }
 
 static void menu_print_error(fatfs_error_code_t error_code)
@@ -177,11 +217,10 @@ static void menu_print_error(fatfs_error_code_t error_code)
 
 void menu(void)
 {
-    fatfs_error_code_t error_code = menu_error_code_invalid_option;
+    fatfs_error_code_t error_code;
     int8_t file_path[261];
-    fatfs_entry_struct_t *entry;
-    uint16_t index = 1;
-    bool exit_menu = false;
+    fatfs_entry_struct_t *user_selection = NULL;
+    bool stop = false;
 
     printf("Enter file path: ");
     /* Get file name */
@@ -192,7 +231,7 @@ void menu(void)
         if (error_code_success == error_code)
         {
             /* Read root directory */
-            error_code = fatfs_read_dir(0, &s_list_head);
+            error_code = fatfs_read_dir(&user_option);
         }
     }
     else
@@ -202,71 +241,30 @@ void menu(void)
 
     if (error_code_success == error_code)
     {
-        while (!exit_menu)
+        while (!stop)
         {
-            switch (context)
+            switch (s_menu_context)
             {
                 case menu_context_directory:
-                    error_code = menu_print_directory();
+                    error_code = menu_show_directory(&user_selection);
                     break;
                 case menu_context_file:
-                    error_code = menu_print_directory();
+                    error_code = menu_show_file(user_selection);
                     break;
-                case menu_context_exit:
-                    exit_menu = false;
+                case menu_exit:
+                    stop = true;
                     break;
-            }
-            /* Get user option */
-            printf("\nEnter an option (enter 0 to exit): ");
-            fflush(stdin);
-            if (0 != scanf("%u", &input) && 0 != input)
-            {
-                for (index = 1, entry = list_head; index != input && NULL != entry; index++)
-                {
-                    entry = entry->next;
-                }
-                if (NULL != entry)
-                {
-                    if (entry->is_subdir)
-                    {
-                        /* Read directory */
-                        error_code = fatfs_read_dir(entry->first_cluster, &list_head);
-                        if (error_code_success == error_code)
-                        {
-                            /* Print directory */
-                            system("cls");
-                            menu_print_directory(list_head);
-                        }
-                    }
-                    else
-                    {
-
-                        if (error_code_success == error_code)
-                        {
-                            /* Print file */
-                            system("cls");
-                            menu_print_file(file_buffer, entry->rounded_size);
-                            printf("\n\nDone. Press any key to close file...\n");
-                            getch();
-                            system("cls");
-                            /* print current directory */
-                            menu_print_directory(list_head);
-                        }
-                        free(file_buffer);
-                    }
-                }
             }
         }
     }
-}
 
-if (error_code_success == error_code)
-{
-    error_code = fatfs_deinit();
-}
+    if (error_code_success == error_code)
+    {
+        error_code = fatfs_deinit();
+    }
 
-if (error_code_success != error_code)
-{
-    menu_print_error(error_code);
-}
+    if (error_code_success != error_code)
+    {
+        menu_print_error(error_code);
+    }
 }
