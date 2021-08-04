@@ -37,7 +37,6 @@ typedef enum
 * Variable
 ******************************************************************************/
 
-
 /*******************************************************************************
 * Prototypes
 ******************************************************************************/
@@ -73,6 +72,7 @@ static void menu_print_directory(fatfs_entry_struct_t *entry_list)
     fatfs_entry_struct_t *entry = entry_list;
     uint16_t user_option = 1;
 
+    system("cls");
     printf("Option   Name     Type     File size   Modified   \n");
     for (user_option = 1; NULL != entry; user_option++)
     {
@@ -93,16 +93,20 @@ static void menu_print_directory(fatfs_entry_struct_t *entry_list)
         }
         entry = entry->next;
     }
+    printf("\nEnter an option (enter 0 to exit): ");
 }
 
 static void menu_print_file(uint8_t *buff, uint32_t size)
 {
     uint32_t index;
 
+    system("cls");
     for (index = 0; index < size; index++)
     {
         printf("%x", buff[index]);
     }
+    printf("\n\nDone. Press any key to close file...\n");
+    getch();
 }
 
 static void menu_print_error(fatfs_error_code_t error_code)
@@ -172,9 +176,7 @@ void menu(void)
     {
         do
         {
-            switch ()
             /* Get user option */
-            printf("\nEnter an option (enter 0 to exit): ");
             fflush(stdin);
             if (0 != scanf("%u", &input) && 0 != input)
             {
@@ -191,7 +193,7 @@ void menu(void)
                         if (error_code_success == error_code)
                         {
                             /* Print directory */
-                            system("cls");
+
                             menu_print_directory(list_head);
                         }
                     }
@@ -207,8 +209,6 @@ void menu(void)
                                 /* Print file */
                                 system("cls");
                                 menu_print_file(file_buffer, entry->rounded_size);
-                                printf("\n\nDone. Press any key to close file...\n");
-                                getch();
                                 system("cls");
                                 /* print current directory */
                                 menu_print_directory(list_head);
