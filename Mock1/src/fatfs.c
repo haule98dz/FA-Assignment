@@ -16,8 +16,8 @@
  * Definitions
  ******************************************************************************/
 
-#define FATFS_READ_UINT16(buff)    (((uint16_t)((buff)[1]) << 8) | ((buff)[0]))
-#define FATFS_READ_UINT32(buff)    (((uint32_t)((buff)[3]) << 24) | ((uint32_t)((buff)[2]) << 16) | ((uint32_t)((buff)[1]) << 8) | ((buff)[0]))
+#define FATFS_READ_UINT16(buff)    ((((uint16_t)((buff)[1])) << 8) | ((buff)[0]))
+#define FATFS_READ_UINT32(buff)    ((((uint32_t)((buff)[3])) << 24) | (((uint32_t)((buff)[2])) << 16) | (((uint32_t)((buff)[1])) << 8) | ((buff)[0]))
 
  /* Masks for converting time and date of entries */
 
@@ -588,16 +588,16 @@ fatfs_error_code_t fatfs_read_dir(uint32_t first_cluster, fatfs_entry_struct_t**
 
         if (NULL != buff)
         {
-            bytes_read = kmc_read_multi_sector(s_fatfs_info.data_index + (current_cluster - 2) * s_fatfs_info.cluster_size, sectors_to_read, buff);
             retVal = error_code_success;
             do
             {
                 if (cluster_type_eof == fatfs_check_cluster(current_cluster))
                 {
-                    retVal = error_code_read_dir_failed;
+                    entry_status = entry_is_eof;
                 }
                 else
                 {
+                    bytes_read = kmc_read_multi_sector(s_fatfs_info.data_index + (current_cluster - 2) * s_fatfs_info.cluster_size, sectors_to_read, buff);
                     for (offset = 0; entry_is_eof != entry_status && offset < bytes_read; offset += 32)
                     {
                         entry_status = fatfs_parse_entry(&buff[offset]);
