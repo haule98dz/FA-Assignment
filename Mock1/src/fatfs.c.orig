@@ -16,40 +16,79 @@
 * Definitions
 ******************************************************************************/
 
+#if (__GNU__)
+#define FATFS_PACK __attribute__((packed))
+#else
+#define FATFS_PACK
+#endif
+
 #define FATFS_READ_UINT16(buff) (((uint16_t)((buff)[1]) << 8) | ((buff)[0]))
+
 #define FATFS_READ_UINT32(buff) (((uint32_t)((buff)[3]) << 24) | ((uint32_t)((buff)[2]) << 16) | ((uint32_t)((buff)[1]) << 8) | ((buff)[0]))
-
-/* Masks for converting time and date of entries */
-#define FATFS_ENTRY_SECOND_MASK (0x1FU)
-#define FATFS_ENTRY_SECOND_SHIFT (0U)
-#define FATFS_ENTRY_GET_SECOND(x) (((uint8_t)(2 * (((uint16_t)(x)) & FATFS_ENTRY_SECOND_MASK)) >> FATFS_ENTRY_SECOND_SHIFT))
-
-#define FATFS_ENTRY_MINUTE_MASK (0x7E0U)
-#define FATFS_ENTRY_MINUTE_SHIFT (5U)
-#define FATFS_ENTRY_GET_MINUTE(x) (((uint8_t)(((uint16_t)(x)) & FATFS_ENTRY_MINUTE_MASK)) >> FATFS_ENTRY_MINUTE_SHIFT)
-
-#define FATFS_ENTRY_HOUR_MASK (0xF800U)
-#define FATFS_ENTRY_HOUR_SHIFT (11U)
-#define FATFS_ENTRY_GET_HOUR(x) (((uint8_t)(((uint16_t)(x)) & FATFS_ENTRY_HOUR_MASK)) >> FATFS_ENTRY_HOUR_SHIFT)
-
-#define FATFS_ENTRY_DAY_MASK (0x1FU)
-#define FATFS_ENTRY_DAY_SHIFT (0U)
-#define FATFS_ENTRY_GET_DAY(x) (((uint8_t)(((uint16_t)(x)) & FATFS_ENTRY_DAY_MASK)) >> FATFS_ENTRY_DAY_SHIFT)
-
-#define FATFS_ENTRY_MONTH_MASK (0x7E0U)
-#define FATFS_ENTRY_MONTH_SHIFT (5U)
-#define FATFS_ENTRY_GET_MONTH(x) (((uint8_t)(((uint16_t)(x)) & FATFS_ENTRY_MONTH_MASK)) >> FATFS_ENTRY_MONTH_SHIFT)
-
-#define FATFS_ENTRY_YEAR_MASK (0xF800U)
-#define FATFS_ENTRY_YEAR_SHIFT (11U)
-#define FATFS_ENTRY_GET_YEAR(x) (((uint8_t)(1980 + (((uint16_t)(x)) & FATFS_ENTRY_YEAR_MASK)) >> FATFS_ENTRY_YEAR_SHIFT))
 
 typedef enum
 {
     eof_fat12 = 0xFF8,
     eof_fat16 = 0xFFF8,
     eof_fat32 = 0x0FFFFFF8
-} fatfs_eof_t; /* Indicate FAT type, also first cluster of EOF region */
+} fatfs_eof_t; /* Indicate FAT type, also EOF start cluster */
+
+typedef struct
+{
+    uint8_t bytes_per_sector[2];           /* 0x00B */
+    uint8_t sectors_per_cluster;           /* 0x00D */
+    uint8_t count_reserved_sectors[2];     /* 0x00E */
+    uint8_t number_of_fat_table;           /* 0x010 */
+    uint8_t max_root_entries[2];           /* 0x011 */
+    uint8_t total_sectors[2];              /* 0x013 */
+    uint8_t media_descriptor;              /* 0x015 */
+    uint8_t sectors_per_fat_table[2];      /* 0x016 */
+    uint8_t physical_sectors_per_track[2]; /* 0x018 */
+    uint8_t number_of_heads_for_disks[2];  /* 0x01A */
+    uint8_t count_of_hidden_sectors[4];    /* 0x01C */
+    uint8_t large_total_sectors[4];        /* 0x020 */
+} FATFS_PACK fatfs_bios_parameter_block_struct_t;
+
+typedef struct
+{
+    uint8_t physical_drive_number;      /* 0x024 */
+    uint8_t reserved;                   /* 0x025 */
+    uint8_t extended_boot_signature;    /* 0x026 */
+    uint8_t volume_id[4];               /* 0x027 */
+    uint8_t partition_volume_label[11]; /* 0x02B */
+    uint8_t bitmask_system_type[8];     /* 0x036 */
+
+    uint8_t specific_boot_code[447]; /* 0x03E */
+} FATFS_PACK fatfs_extended_bpb_struct_t;
+
+typedef struct
+{
+    uint8_t sectors_per_fat_table[4];         /* 0x024 */
+    uint8_t drive_description[2];             /* 0x028 */
+    uint8_t version[2];                       /* 0x02A */
+    uint8_t root_dir_start_cluster[4];        /* 0x02C */
+    uint8_t fs_info_start_sector[2];          /* 0x030 */
+    uint8_t boot_sector_copy_start_sector[2]; /* 0x032 */
+    uint8_t reserved[12];                     /* 0x034 */
+    uint8_t physical_drive_number;            /* 0x040 */
+    uint8_t for_various_purposes;             /* 0x041 */
+    uint8_t extended_boot_signature;          /* 0x042 */
+    uint8_t volume_id[4];                     /* 0x043 */
+    uint8_t volume_label[11];                 /* 0x047 */
+    uint8_t bitmask_system_type[8];           /* 0x052 */
+
+    uint8_t specific_boot_code[419]; /* 0x05A */
+} FATFS_PACK fatfs_fat32_extended_bpb_struct_t;
+
+typedef struct
+{
+    uint8_t jump_instruction[3];              /* 0x000 */
+    int8_t oem_name[8];                       /* 0x003 */
+    fatfs_bios_parameter_block_struct_t bpb;  /* 0x00B */
+    fatfs_extended_bpb_struct_t extended_bpb; /* 0x024 */
+    uint8_t physical_drive_number;            /* 0x1FD */
+    uint8_t boot_sector_signature[2];         /* 0x1FE */
+} FATFS_PACK fatfs_boot_sector_struct_t;
 
 typedef struct
 {
@@ -113,8 +152,6 @@ typedef enum
 * Prototypes
 ******************************************************************************/
 
-static bool fatfs_get_next_cluster(uint32_t *current_cluster);
-
 /**
  * @brief Parse an entry, push to entry list if it's a normal entry
  *
@@ -130,9 +167,6 @@ static fatfs_entry_status_t fatfs_parse_entry(uint8_t *buff);
  */
 static void fatfs_update_entry_list(fatfs_entry_struct_t *entry);
 
-/**
- * @brief Free entry list
- */
 static void fatfs_free_entry_list(void);
 
 /*******************************************************************************
@@ -141,6 +175,9 @@ static void fatfs_free_entry_list(void);
 
 /* FAT file system information */
 static fatfs_info_struct_t s_fatfs_info;
+
+/* For FAT32 only: FAT32 Extended BIOS Parameter Block */
+static fatfs_fat32_extended_bpb_struct_t *sp_fatfs_fat32_extended_bpb;
 
 /* Head pointer of entry list */
 static fatfs_entry_struct_t *sp_fatfs_entry_head = NULL;
@@ -174,8 +211,8 @@ static fatfs_entry_status_t fatfs_parse_entry(uint8_t *buff)
     fatfs_entry_struct_t *entry;
     uint16_t time_binary;
     uint16_t date_binary;
-    static int8_t s_long_file_name[256];
-    static uint16_t s_long_file_name_len = 0;
+    static int8_t long_file_name[256];
+    static uint16_t long_file_name_len = 0;
     int8_t index = 0;
 
     if (0x0F == buff[entry_offset_file_attributes])
@@ -184,34 +221,34 @@ static fatfs_entry_status_t fatfs_parse_entry(uint8_t *buff)
 
         if (0 != buff[0] | 0x40) /* if this entry is "the last logical LFN entry" */
         {
-            s_long_file_name_len = 0;
+            long_file_name_len = 0;
         }
 
-        /* Copy 16-bits characters in LFN entry to 8-bits characters in s_long_file_name buffer */
-        for (index = 0; index < 10; index += 2, s_long_file_name_len++)
+        /* Copy 16-bits characters in LFN entry to 8-bits characters in long_file_name buffer */
+        for (index = 0; index < 10; index += 2, long_file_name_len++)
         {
-            s_long_file_name[s_long_file_name_len] = buff[0x01 + index];
+            long_file_name[long_file_name_len] = buff[0x01 + index];
         }
 
-        for (index = 0; index < 12; index += 2, s_long_file_name_len++)
+        for (index = 0; index < 12; index += 2, long_file_name_len++)
         {
-            s_long_file_name[s_long_file_name_len] = buff[0x0E + index];
+            long_file_name[long_file_name_len] = buff[0x0E + index];
         }
 
-        for (index = 0; index < 4; index += 2, s_long_file_name_len++)
+        for (index = 0; index < 4; index += 2, long_file_name_len++)
         {
-            s_long_file_name[s_long_file_name_len] = buff[0x1C + index];
+            long_file_name[long_file_name_len] = buff[0x1C + index];
         }
 
-        s_long_file_name_len += 26;
+        long_file_name_len += 26;
 
         /* Remove padding spaces */
-        while (s_long_file_name[s_long_file_name_len - 1] == ' ')
+        while (long_file_name[long_file_name_len - 1] == ' ')
         {
-            s_long_file_name_len--;
+            long_file_name_len--;
         }
 
-        s_long_file_name[s_long_file_name_len] = '\0';
+        long_file_name[long_file_name_len] = '\0';
     }
     else if (0 == buff[0])
     {
@@ -229,9 +266,11 @@ static fatfs_entry_status_t fatfs_parse_entry(uint8_t *buff)
     {
         retVal = entry_is_normal;
         entry = (fatfs_entry_struct_t *)malloc(sizeof(fatfs_entry_struct_t));
+        /* Get file size */
+        entry->file_size = FATFS_READ_UINT32(&buff[entry_offset_file_size]);
 
         /* Idicate that file is a subdirectory or a file */
-        if ((bitmask_subdirectory & buff[entry_offset_file_attributes]) != 0)
+        if ((bitmask_subdirectory & buff[entry_offset_file_attributes]) != 0 || entry->file_size == 0)
         {
             entry->is_subdir = true;
         }
@@ -249,15 +288,15 @@ static fatfs_entry_status_t fatfs_parse_entry(uint8_t *buff)
         entry->extension[3] = '\0';
 
         /* Get file name */
-        if (s_long_file_name_len > 0)
+        if (long_file_name_len > 0)
         {
-            for (index = 0; index < s_long_file_name_len; index++)
+            for (index = 0; index < long_file_name_len; index++)
             {
-                entry->name[index] = s_long_file_name[index];
+                entry->name[index] = long_file_name[index];
             }
 
-            entry->name[s_long_file_name_len] = '\0';
-            s_long_file_name_len = 0;
+            entry->name[long_file_name_len] = '\0';
+            long_file_name_len = 0;
         }
         else
         {
@@ -274,47 +313,19 @@ static fatfs_entry_status_t fatfs_parse_entry(uint8_t *buff)
             }
         }
 
-        /* Get created date and time */
-        time_binary = FATFS_READ_UINT16(&buff[entry_offset_created_time]);
-        date_binary = FATFS_READ_UINT16(&buff[entry_offset_created_date]);
-
-        entry->created_time.minute = FATFS_ENTRY_GET_MINUTE(time_binary);
-        entry->created_time.hour = FATFS_ENTRY_GET_HOUR(time_binary);
-
-        entry->created_time.day = FATFS_ENTRY_GET_DAY(date_binary);
-        entry->created_time.month = FATFS_ENTRY_GET_MONTH(date_binary);
-        entry->created_time.year = FATFS_ENTRY_GET_MONTH(date_binary);
-
         /* Get last modified date and time */
         time_binary = FATFS_READ_UINT16(&buff[entry_offset_modified_time]);
         date_binary = FATFS_READ_UINT16(&buff[entry_offset_modified_date]);
 
-        entry->modified_time.minute = FATFS_ENTRY_GET_MINUTE(time_binary);
-        entry->modified_time.hour = FATFS_ENTRY_GET_HOUR(time_binary);
+        entry->modified_time.minute = (uint8_t)((time_binary >> 5) & 0x003F);
+        entry->modified_time.hour = (uint8_t)(time_binary >> 11);
 
-        entry->modified_time.day = FATFS_ENTRY_GET_DAY(date_binary);
-        entry->modified_time.month = FATFS_ENTRY_GET_MONTH(date_binary);
-        entry->modified_time.year = FATFS_ENTRY_GET_MONTH(date_binary);
+        entry->modified_time.day = (uint8_t)(date_binary & 0x001F);
+        entry->modified_time.month = (uint8_t)((date_binary >> 5) & 0x000F);
+        entry->modified_time.year = (date_binary >> 9) + 1980;
 
         /* Get first cluster */
-        if (eof_fat32 == s_fatfs_info.eof)
-        {
-            /* High two bytes at 0x14 */
-            entry->first_cluster = (uint32_t)FATFS_READ_UINT16(&buff[0x14]);
-            entry->first_cluster <<= 16;
-            /* Low two bytes at 0x1A */
-            entry->first_cluster |= FATFS_READ_UINT16(&buff[0x1A]);
-        }
-        else
-        {
-            entry->first_cluster = FATFS_READ_UINT16(&buff[entry_offset_first_cluster]);
-        }
-
-        /* Get file size */
-        entry->size = FATFS_READ_UINT32(&buff[entry_offset_file_size]);
-
-        /* Round up file size */
-        entry->rounded_size = ((entry->size + s_fatfs_info.sector_size - 1) / s_fatfs_info.sector_size) * s_fatfs_info.sector_size;
+        entry->first_cluster = FATFS_READ_UINT16(&buff[entry_offset_first_cluster]);
 
         /* Add entry to list */
         entry->next = NULL;
@@ -334,79 +345,112 @@ static void fatfs_free_entry_list(void)
         free(sp_fatfs_entry_head);
         sp_fatfs_entry_head = entry;
     }
-
     sp_fatfs_entry_tail = NULL;
 }
 
-static bool fatfs_get_next_cluster(uint32_t *current_cluster)
+static uint32_t fatfs_get_next_cluster(uint32_t current_cluster)
 {
-    uint32_t retVal = false;
+    uint32_t retVal = s_fatfs_info.eof;
     uint32_t index_sector_in_table = 0;
     uint32_t index_byte_in_sector = 0;
+    uint8_t sector_to_read = 1;
     uint8_t *buff = NULL;
     int32_t bytes_read;
 
-    buff = (uint8_t *)malloc(2 * s_fatfs_info.sector_size);
     switch (s_fatfs_info.eof)
     {
-    case eof_fat12:
-        index_sector_in_table = (3 * (*current_cluster) / 2) / s_fatfs_info.sector_size;
-        index_byte_in_sector = (3 * (*current_cluster) / 2) % s_fatfs_info.sector_size;
-        buff = (uint8_t *)malloc(2 * s_fatfs_info.sector_size);
-        if (NULL != buff)
-        {
-            bytes_read = kmc_read_multi_sector(index_sector_in_table + s_fatfs_info.fat_index, 2, buff);
-            if (2 * s_fatfs_info.sector_size == bytes_read)
+        case eof_fat12:
+            index_sector_in_table = (3 * current_cluster / 2) / s_fatfs_info.sector_size;
+            index_byte_in_sector = (3 * current_cluster / 2) % s_fatfs_info.sector_size;
+
+            /* If the cluster address lie in 2 consecutive sectors */
+            if (s_fatfs_info.sector_size - index_byte_in_sector == 1)
             {
-                retVal = true;
-                if (0 == (3 * (*current_cluster)) % 2)
+                sector_to_read = 2;
+            }
+
+            buff = (uint8_t *)malloc(sector_to_read * s_fatfs_info.sector_size);
+
+            if (NULL != buff)
+            {
+                bytes_read = kmc_read_multi_sector(index_sector_in_table + s_fatfs_info.fat_index, sector_to_read, buff);
+
+                if (bytes_read == sector_to_read * s_fatfs_info.sector_size)
                 {
-                    (*current_cluster) = buff[index_byte_in_sector + 1] & 0x0F; /* high half-byte */
-                    (*current_cluster) <<= 8;
-                    (*current_cluster) |= buff[index_byte_in_sector]; /* low full-byte */
+                    if ((3 * current_cluster) % 2 == 0)
+                    {
+                        retVal = buff[index_byte_in_sector + 1] & 0x0F; /* high half-byte */
+                        retVal <<= 8;
+                        retVal |= buff[index_byte_in_sector]; /* low full-byte */
+                    }
+                    else
+                    {
+                        retVal = buff[index_byte_in_sector + 1]; /* high full-byte */
+                        retVal <<= 4;
+                        retVal |= (buff[index_byte_in_sector] >> 4); /* low half byte */
+                    }
                 }
-                else
+
+                free(buff);
+            }
+
+            break;
+
+        case eof_fat16:
+            index_sector_in_table = 2 * current_cluster / s_fatfs_info.sector_size;
+            index_byte_in_sector = (2 * current_cluster) % s_fatfs_info.sector_size;
+
+            /* If the cluster address lie in 2 consecutive sectors */
+            if (1 == s_fatfs_info.sector_size - index_byte_in_sector)
+            {
+                sector_to_read = 2;
+            }
+
+            buff = (uint8_t *)malloc(sector_to_read * s_fatfs_info.sector_size);
+
+            if (NULL != buff)
+            {
+                bytes_read = kmc_read_multi_sector(index_sector_in_table + s_fatfs_info.fat_index, sector_to_read, buff);
+
+                if (bytes_read == sector_to_read * s_fatfs_info.sector_size)
                 {
-                    (*current_cluster) = buff[index_byte_in_sector + 1]; /* high full-byte */
-                    (*current_cluster) <<= 4;
-                    (*current_cluster) |= (buff[index_byte_in_sector] >> 4); /* low half byte */
+                    retVal = FATFS_READ_UINT16(&buff[index_byte_in_sector]);
                 }
-            }
-        }
-        break;
 
-    case eof_fat16:
-        index_sector_in_table = 2 * (*current_cluster) / s_fatfs_info.sector_size;
-        index_byte_in_sector = (2 * (*current_cluster)) % s_fatfs_info.sector_size;
-        if (NULL != buff)
-        {
-            bytes_read = kmc_read_multi_sector(index_sector_in_table + s_fatfs_info.fat_index, 2, buff);
-            if (2 * s_fatfs_info.sector_size == bytes_read)
+                free(buff);
+            }
+
+            break;
+
+        case eof_fat32:
+            index_sector_in_table = 4 * current_cluster / s_fatfs_info.sector_size;
+            index_byte_in_sector = (4 * current_cluster) % s_fatfs_info.sector_size;
+
+            /* If the cluster address lie in 2 consecutive sectors */
+            if (3 >= s_fatfs_info.sector_size - index_byte_in_sector)
             {
-                retVal = true;
-                (*current_cluster) = FATFS_READ_UINT16(&buff[index_byte_in_sector]);
+                sector_to_read = 2;
             }
-        }
-        break;
 
-    case eof_fat32:
-        index_sector_in_table = 4 * (*current_cluster) / s_fatfs_info.sector_size;
-        index_byte_in_sector = (4 * (*current_cluster)) % s_fatfs_info.sector_size;
-        if (NULL != buff)
-        {
-            bytes_read = kmc_read_multi_sector(index_sector_in_table + s_fatfs_info.fat_index, 2, buff);
-            if (bytes_read == 2 * s_fatfs_info.sector_size)
+            buff = (uint8_t *)malloc(sector_to_read * s_fatfs_info.sector_size);
+
+            if (NULL != buff)
             {
-                retVal = true;
-                (*current_cluster) = FATFS_READ_UINT32(&buff[index_byte_in_sector]);
-            }
-        }
-        break;
+                bytes_read = kmc_read_multi_sector(index_sector_in_table + s_fatfs_info.fat_index, sector_to_read, buff);
 
-    default:
-        break;
+                if (bytes_read == sector_to_read * s_fatfs_info.sector_size)
+                {
+                    retVal = FATFS_READ_UINT32(&buff[index_byte_in_sector]);
+                }
+
+                free(buff);
+            }
+
+            break;
+
+        default:
+            break;
     }
-    free(buff);
 
     return retVal;
 }
@@ -424,68 +468,68 @@ static fatfs_cluster_type_t fatfs_check_cluster(uint32_t cluster_index)
     {
         switch (s_fatfs_info.eof)
         {
-        case eof_fat12:
-            if (cluster_index >= 0x002 && cluster_index <= 0xFEF)
-            {
-                retVal = cluster_type_data;
-            }
-            else if (cluster_index >= 0xFF0 && cluster_index <= 0xFF5)
-            {
-                retVal = cluster_type_reserve;
-            }
-            else if (0xFF6 == cluster_index)
-            {
-                retVal = cluster_type_not_used;
-            }
-            else
-            {
-                retVal = cluster_type_bad_sector;
-            }
+            case eof_fat12:
+                if (cluster_index >= 0x002 && cluster_index <= 0xFEF)
+                {
+                    retVal = cluster_type_data;
+                }
+                else if (cluster_index >= 0xFF0 && cluster_index <= 0xFF5)
+                {
+                    retVal = cluster_type_reserve;
+                }
+                else if (0xFF6 == cluster_index)
+                {
+                    retVal = cluster_type_not_used;
+                }
+                else
+                {
+                    retVal = cluster_type_bad_sector;
+                }
 
-            break;
+                break;
 
-        case eof_fat16:
-            if (cluster_index >= 0x0002 && cluster_index <= 0xFFEF)
-            {
-                retVal = cluster_type_data;
-            }
-            else if (cluster_index >= 0xFFF0 && cluster_index <= 0xFFF5)
-            {
-                retVal = cluster_type_reserve;
-            }
-            else if (0xFFF6 == cluster_index)
-            {
-                retVal = cluster_type_not_used;
-            }
-            else
-            {
-                retVal = cluster_type_bad_sector;
-            }
+            case eof_fat16:
+                if (cluster_index >= 0x0002 && cluster_index <= 0xFFEF)
+                {
+                    retVal = cluster_type_data;
+                }
+                else if (cluster_index >= 0xFFF0 && cluster_index <= 0xFFF5)
+                {
+                    retVal = cluster_type_reserve;
+                }
+                else if (0xFFF6 == cluster_index)
+                {
+                    retVal = cluster_type_not_used;
+                }
+                else
+                {
+                    retVal = cluster_type_bad_sector;
+                }
 
-            break;
+                break;
 
-        case eof_fat32:
-            if (cluster_index >= 0x00000002 && cluster_index <= 0xFFFFFFEF)
-            {
-                retVal = cluster_type_data;
-            }
-            else if (cluster_index >= 0x0FFFFFF0 && cluster_index <= 0x0FFFFFF5)
-            {
-                retVal = cluster_type_reserve;
-            }
-            else if (0x0FFFFFF6 == cluster_index)
-            {
-                retVal = cluster_type_not_used;
-            }
-            else
-            {
-                retVal = cluster_type_bad_sector;
-            }
+            case eof_fat32:
+                if (cluster_index >= 0x00000002 && cluster_index <= 0xFFFFFFEF)
+                {
+                    retVal = cluster_type_data;
+                }
+                else if (cluster_index >= 0x0FFFFFF0 && cluster_index <= 0x0FFFFFF5)
+                {
+                    retVal = cluster_type_reserve;
+                }
+                else if (0x0FFFFFF6 == cluster_index)
+                {
+                    retVal = cluster_type_not_used;
+                }
+                else
+                {
+                    retVal = cluster_type_bad_sector;
+                }
 
-            break;
+                break;
 
-        default:
-            break;
+            default:
+                break;
         }
     }
 
@@ -505,17 +549,20 @@ fatfs_error_code_t fatfs_init(int8_t *file_path)
     if (kmc_open(file_path))
     {
         /* Read boot sector */
-        bytes_read = kmc_read_sector(0, (uint8_t *)&(s_fatfs_info.boot_sector));
+        bytes_read = kmc_read_sector(0, (uint8_t *) & (s_fatfs_info.boot_sector));
 
         if (512 == bytes_read)
         {
             retVal = error_code_success;
             /* Identify FAT type */
             bpb_sectors_per_fat_table = FATFS_READ_UINT16(s_fatfs_info.boot_sector.bpb.sectors_per_fat_table);
+
             if (0 == bpb_sectors_per_fat_table) /* FAT32 sets this to 0 and uses the 32-bit value at offset 0x024 instead. */
             {
                 s_fatfs_info.eof = eof_fat32;
-                bpb_sectors_per_fat_table = FATFS_READ_UINT32(s_fatfs_info.boot_sector.extended_bpb.fat32_extended_bpb.sectors_per_fat_table);
+                /* Read FAT32 extended BPB */
+                sp_fatfs_fat32_extended_bpb = (fatfs_fat32_extended_bpb_struct_t *)(&s_fatfs_info.boot_sector.extended_bpb);
+                bpb_sectors_per_fat_table = FATFS_READ_UINT32(sp_fatfs_fat32_extended_bpb->sectors_per_fat_table);
             }
             else if (12 >= bpb_sectors_per_fat_table) /* FAT12: 1 to 12 sectors per copy of FAT */
             {
@@ -560,8 +607,7 @@ fatfs_error_code_t fatfs_read_dir(uint32_t first_cluster, fatfs_entry_struct_t *
 
     if (0 == first_cluster && eof_fat32 == s_fatfs_info.eof)
     {
-        /* If reading root directory of FAT32, update root region (get from ) */
-        current_cluster = FATFS_READ_UINT32(s_fatfs_info.boot_sector.extended_bpb.fat32_extended_bpb.root_dir_start_cluster);
+        current_cluster = FATFS_READ_UINT32(sp_fatfs_fat32_extended_bpb->root_dir_start_cluster);
     }
 
     if (0 == first_cluster && eof_fat32 != s_fatfs_info.eof)
@@ -569,10 +615,12 @@ fatfs_error_code_t fatfs_read_dir(uint32_t first_cluster, fatfs_entry_struct_t *
         /* Reading from FAT12/16 root region */
         sectors_to_read = s_fatfs_info.data_index - s_fatfs_info.root_index;
         buff = (uint8_t *)malloc(sectors_to_read * s_fatfs_info.sector_size);
+
         if (NULL != buff)
         {
             retVal = error_code_success;
             bytes_read = kmc_read_multi_sector(s_fatfs_info.root_index, sectors_to_read, buff);
+
             for (offset = 0; entry_is_eof != entry_status && offset < bytes_read; offset += 32)
             {
                 entry_status = fatfs_parse_entry(&buff[offset]);
@@ -588,26 +636,24 @@ fatfs_error_code_t fatfs_read_dir(uint32_t first_cluster, fatfs_entry_struct_t *
         if (NULL != buff)
         {
             bytes_read = kmc_read_multi_sector(s_fatfs_info.data_index + (current_cluster - 2) * s_fatfs_info.cluster_size, sectors_to_read, buff);
-            retVal = error_code_success;
+
             do
             {
                 if (cluster_type_eof == fatfs_check_cluster(current_cluster))
                 {
-                    retVal = error_code_read_dir_failed;
+                    entry_status = entry_is_eof;
                 }
-                else
-                {
-                    for (offset = 0; entry_is_eof != entry_status && offset < bytes_read; offset += 32)
-                    {
-                        entry_status = fatfs_parse_entry(&buff[offset]);
-                    }
-                    if (!fatfs_get_next_cluster(&current_cluster)) // error encountered
-                    {
-                        retVal = error_code_read_dir_failed;
-                    }
-                }
-            } while (entry_is_eof != entry_status && error_code_success == retVal);
 
+                for (offset = 0; entry_is_eof != entry_status && offset < bytes_read; offset += 32)
+                {
+                    entry_status = fatfs_parse_entry(&buff[offset]);
+                }
+
+                current_cluster = fatfs_get_next_cluster(current_cluster);
+            }
+            while (entry_is_eof != entry_status);
+
+            retVal = error_code_success;
             free(buff);
         }
     }
@@ -620,21 +666,26 @@ fatfs_error_code_t fatfs_read_dir(uint32_t first_cluster, fatfs_entry_struct_t *
     return retVal;
 }
 
-fatfs_error_code_t fatfs_read_file(uint32_t first_cluster, uint8_t **file_buff, uint32_t size)
+fatfs_error_code_t fatfs_read_file(uint32_t first_cluster, uint8_t **file_buff, uint32_t *size)
 {
     fatfs_error_code_t retVal = error_code_success;
     uint8_t *cluster_buff = NULL;
     uint32_t current_cluster = first_cluster;
     int32_t bytes_read = 0;
 
-    if (0 != size)
+    if (0 != (*size))
     {
         while (cluster_type_eof != fatfs_check_cluster(current_cluster) && error_code_success == retVal)
         {
             bytes_read += kmc_read_multi_sector(s_fatfs_info.data_index + (current_cluster - 2) * s_fatfs_info.cluster_size, s_fatfs_info.cluster_size, &((*file_buff)[bytes_read]));
-            if (bytes_read > size || !fatfs_get_next_cluster(&current_cluster))
+
+            if (bytes_read > (*size))
             {
                 retVal = error_code_read_file_failed;
+            }
+            else
+            {
+                current_cluster = fatfs_get_next_cluster(current_cluster);
             }
         }
     }

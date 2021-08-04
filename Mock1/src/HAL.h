@@ -10,21 +10,22 @@
 ******************************************************************************/
 
 /**
- * @brief Open image file
+ * @brief Open FAT image file
  *
  * @return true If open successfully
  * @return false If open failed
  */
-bool kmc_open(uint8_t* filePath);
+bool kmc_open(int8_t* filePath);
 
 /**
- * @brief Updade number of bytes per sector
+ * @brief Updade sector size (number of bytes per sector)
  *
  * @param sector_size New value of sector size
  * @return true If input is valid sector size
  * @return false If input is invalid sector size
  */
 bool kmc_update_sector_size(uint32_t sector_size);
+
 /**
  * @brief Read a sectors, store data in buffer
  *
@@ -45,7 +46,7 @@ int32_t kmc_read_sector(uint32_t index, uint8_t *buff);
 int32_t kmc_read_multi_sector(uint32_t index, uint32_t num, uint8_t *buff);
 
 /**
- * @brief Close image file
+ * @brief Close FAT image file
  *
  * @return true If close successfully
  * @return false If close failed
