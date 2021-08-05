@@ -45,12 +45,13 @@
 #define FATFS_ENTRY_YEAR_SHIFT    (9U)
 #define FATFS_ENTRY_GET_YEAR(x)    ((uint16_t)(1980 + ((((uint16_t)(x)) & FATFS_ENTRY_YEAR_MASK) >> FATFS_ENTRY_YEAR_SHIFT)))
 
+/* Indicate FAT type, also first cluster of EOF region */
 typedef enum
 {
     eof_fat12 = 0xFF8,
     eof_fat16 = 0xFFF8,
     eof_fat32 = 0x0FFFFFF8
-} fatfs_eof_t; /* Indicate FAT type, also first cluster of EOF region */
+} fatfs_eof_t;
 
 typedef struct
 {
@@ -114,8 +115,6 @@ typedef enum
 * Prototypes
 ******************************************************************************/
 
-static bool fatfs_get_next_cluster(uint32_t* current_cluster);
-
 /**
  * @brief Parse an entry, push to entry list if it's a normal entry
  *
@@ -125,7 +124,7 @@ static bool fatfs_get_next_cluster(uint32_t* current_cluster);
 static fatfs_entry_status_t fatfs_parse_entry(uint8_t* buff);
 
 /**
- * @brief add entry into entry list
+ * @brief add an entry into entry list
  *
  * @param entry The entry to add into list
  */
@@ -135,6 +134,23 @@ static void fatfs_update_entry_list(fatfs_entry_struct_t* entry);
  * @brief Free entry list
  */
 static void fatfs_free_entry_list(void);
+
+/**
+ * @brief Get next cluster from FAT table
+ *
+ * @param current_cluster Current cluster (pointer)
+ * @return true If succesful
+ * @return false If failed
+ */
+static bool fatfs_get_next_cluster(uint32_t* current_cluster);
+
+/**
+ * @brief Get cluster type: data, eof, free, reserved, bad sector,...
+ *
+ * @param cluster_index index of cluster in data region
+ * @return fatfs_cluster_type_t Type of cluster
+ */
+static fatfs_cluster_type_t fatfs_check_cluster(uint32_t cluster_index);
 
 /*******************************************************************************
 * Variables
@@ -179,6 +195,7 @@ static fatfs_entry_status_t fatfs_parse_entry(uint8_t* buff)
     static uint16_t s_long_file_name_len = 0;
     int8_t index = 0;
 
+    /* If entry is Long File Name entry */
     if (0x0F == buff[entry_offset_file_attributes])
     {
         retVal = entry_is_long_file_name;
@@ -416,7 +433,7 @@ static fatfs_cluster_type_t fatfs_check_cluster(uint32_t cluster_index)
 {
     fatfs_cluster_type_t retVal;
 
-    /* If cluster is EOF (in FAT table, cluster 0 and 1 are also treated as EOF) */
+    /* If cluster is EOF (in FAT table, value 0 and 1 are also treated as EOF) */
     if (cluster_index >= s_fatfs_info.eof || 0 == cluster_index || 1 == cluster_index)
     {
         retVal = cluster_type_eof;

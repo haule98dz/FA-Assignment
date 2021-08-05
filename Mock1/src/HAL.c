@@ -48,6 +48,7 @@ bool kmc_update_sector_size(uint32_t sector_size)
 
     if (0 == sector_size % KMC_DEFAULT_SECTOR_SIZE)
     {
+        retVal = true;
         s_kmc_sector_size = sector_size;
     }
 

@@ -5,9 +5,9 @@
 #ifndef _FATFS_
 #define _FATFS_
 
-/*******************************************************************************
-* Definitions
-******************************************************************************/
+ /*******************************************************************************
+ * Definitions
+ ******************************************************************************/
 
 typedef enum
 {
@@ -19,9 +19,9 @@ typedef enum
 } fatfs_error_code_t;
 
 #if (__GNU__)
-    #define FATFS_PACK __attribute__((packed))
+#define FATFS_PACK __attribute__((packed))
 #else
-    #define FATFS_PACK
+#define FATFS_PACK
 #endif
 
 typedef struct
@@ -78,8 +78,8 @@ typedef struct
     uint8_t jump_instruction[3];              /* 0x000 */
     int8_t oem_name[8];                       /* 0x003 */
     fatfs_bios_parameter_block_struct_t bpb;  /* 0x00B */
-    fatfs_extended_bpb_union_t extended_bpb;/* 0x024 */
-    uint8_t specific_boot_code[419]; /* 0x05A */
+    fatfs_extended_bpb_union_t extended_bpb;  /* 0x024 */
+    uint8_t specific_boot_code[419];          /* 0x05A */
     uint8_t physical_drive_number;            /* 0x1FD */
     uint8_t boot_sector_signature[2];         /* 0x1FE */
 } FATFS_PACK fatfs_boot_sector_struct_t;
@@ -104,7 +104,7 @@ typedef struct _entry
     uint32_t rounded_size;
     bool is_subdir;
 
-    struct _entry *next;
+    struct _entry* next;
 } fatfs_entry_struct_t;
 
 /*******************************************************************************
@@ -117,7 +117,7 @@ typedef struct _entry
  * @param file_path File path
  * @return fatfs_error_code_t error code
  */
-fatfs_error_code_t fatfs_init(int8_t *file_path);
+fatfs_error_code_t fatfs_init(int8_t* file_path);
 
 /**
  * @brief Open a subdirectory
@@ -126,7 +126,7 @@ fatfs_error_code_t fatfs_init(int8_t *file_path);
  * @param entry_list Output: Pointer to the header of entry list
  * @return fatfs_error_code_t Error code
  */
-fatfs_error_code_t fatfs_read_dir(uint32_t first_cluster, fatfs_entry_struct_t **entry_list);
+fatfs_error_code_t fatfs_read_dir(uint32_t first_cluster, fatfs_entry_struct_t** entry_list);
 
 /**
  * @brief Read a file
@@ -136,7 +136,7 @@ fatfs_error_code_t fatfs_read_dir(uint32_t first_cluster, fatfs_entry_struct_t *
  * @param size Output: Size of file data buffer
  * @return fatfs_error_code_t Error code
  */
-fatfs_error_code_t fatfs_read_file(uint32_t first_cluster, uint8_t **file_buff_ptr, uint32_t size);
+fatfs_error_code_t fatfs_read_file(uint32_t first_cluster, uint8_t** file_buff_ptr, uint32_t size);
 
 /**
  * @brief FAT deinit: Close file, free dynamic memory

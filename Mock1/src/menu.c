@@ -39,9 +39,16 @@ typedef enum
 * Variable
 ******************************************************************************/
 
+/* Variable to switch between contexts */
 static menu_context_t s_menu_context = menu_context_initiate_fat;
+
+/* Pointer head of linked list */
 static fatfs_entry_struct_t* sp_dir_list = NULL;
+
+/* File data buffer */
 static uint8_t* sp_file_buffer = NULL;
+
+/* Buffer size */
 static uint32_t s_buffer_size = 0;
 
 /*******************************************************************************
@@ -291,11 +298,13 @@ void menu(void)
                 stop = true;
                 break;
         }
-    }
-    error_code = fatfs_deinit();
-
-    if (error_code_success != error_code)
-    {
-        menu_print_error(error_code);
+        if (stop && error_code_init_failed != error_code)
+        {
+            error_code = fatfs_deinit();
+            if (error_code_success != error_code)
+            {
+                menu_print_error(error_code);
+            }
+        }
     }
 }
