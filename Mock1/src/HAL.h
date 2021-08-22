@@ -22,7 +22,7 @@ bool kmc_open(int8_t* filePath);
  *
  * @param sector_size New value of sector size
  * @return true If input is valid sector size
- * @return false If input is invalid sector size
+ * @return false If input is not a valid sector size
  */
 bool kmc_update_sector_size(uint32_t sector_size);
 

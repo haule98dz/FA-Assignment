@@ -1,0 +1,1 @@
+The output program was tested in the latest version of 64-bits Window 10 system. Running the output program in any other system (expecially with LINUX) may result in unexpected error, because, to clear stdin, the function "fflush" was used instead of the non-stadard function "fpurge".
