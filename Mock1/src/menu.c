@@ -297,6 +297,8 @@ void menu(void)
             case menu_exit:
                 stop = true;
                 break;
+            default:
+                break;
         }
         if (stop && error_code_init_failed != error_code)
         {
